@@ -32,7 +32,10 @@ public record DadosCadastroCarterinha(
     @NotBlank(message = "Instituição é obrigatória")
     String instituicao,
 
+    @NotBlank(message = "Matrícula é obrigatória")
+    String matricula,
+
     @NotBlank(message = "Imagem é obrigatória")
-    MultipartFile imagem
+    String linkImagem
 
 ) {}

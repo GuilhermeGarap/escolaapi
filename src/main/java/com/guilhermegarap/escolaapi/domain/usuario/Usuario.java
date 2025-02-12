@@ -41,10 +41,16 @@ public class Usuario implements UserDetails {
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     private Carterinha carterinha;
 
+    public Usuario(DadosCadastroUsuario dados) {
+        this.nomeCompleto = dados.nomeCompleto();
+        this.email = dados.email();
+        this.senha = dados.senha();
+        this.role = dados.role() != null ? dados.role() : "ALUNO";
+    }
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Verifica se a role é "ADMIN" ou "ALUNO" e retorna as permissões adequadas
         if ("ADMIN".equals(role)) {
             return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
         } else if ("ALUNO".equals(role)) {
@@ -52,7 +58,7 @@ public class Usuario implements UserDetails {
         } else {
             return List.of(new SimpleGrantedAuthority("ROLE_USER"));
         }
-    }
+    }    
 
     @Override
     public String getPassword() {
@@ -82,6 +88,12 @@ public class Usuario implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+
+    public Usuario orElseThrow(Object object) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
     }
     
 }

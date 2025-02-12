@@ -1,7 +1,10 @@
 package com.guilhermegarap.escolaapi.domain.carterinha;
 
+
 import com.guilhermegarap.escolaapi.domain.usuario.Usuario;
 
+import br.com.caelum.stella.validation.CPFValidator;
+import br.com.caelum.stella.validation.InvalidStateException;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -48,6 +51,18 @@ public class Carterinha {
         this.telefone = dadosCadastroCarterinha.telefone();
         this.curso = dadosCadastroCarterinha.curso();
         this.instituicao = dadosCadastroCarterinha.instituicao();
+        this.matricula = dadosCadastroCarterinha.matricula();
+        this.linkImagem = dadosCadastroCarterinha.linkImagem();
     }
+
+    public boolean verificadorCpf(String cpf) {
+    CPFValidator cpfValidator = new CPFValidator();
+    try {
+        cpfValidator.assertValid(cpf);
+        return true;
+    } catch (InvalidStateException e) {
+        return false;
+    }
+}
 
 }

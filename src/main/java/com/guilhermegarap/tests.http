@@ -3,7 +3,7 @@ GET http://localhost:8080/carterinha/listar
 
 ### Cadastrar Carterinha
 
-POST http://localhost:8080/carterinhas/cadastrar
+POST http://localhost:8080/carterinha/cadastrar
 Content-Type: application/json
 
 {
@@ -17,17 +17,6 @@ Content-Type: application/json
   "imagem": "teste"
   }
 
-### Cadastrar Usuario
-  
-POST http://localhost:8080/usuario/cadastro
-Content-Type: application/json
-{
-
-    "email": "logintestes@hotmail.com",
-    "senha": "senhatestes"
-
-}
-
 ### Logar Usuario
 POST http://localhost:8080/usuario/login
 Content-Type: application/json
@@ -36,6 +25,18 @@ Content-Type: application/json
 
     "email": "logintestes@hotmail.com",
     "senha": "senhatestes"
+
+}
+
+### Cadastrar Usuario
+POST http://localhost:8080/usuario/cadastrar
+Content-Type: application/json
+
+{
+
+    "nomeCompleto": "Gui gp",
+    "email": "guilhermegarap@gmail.com",
+    "senha": "12345"
 
 }
 

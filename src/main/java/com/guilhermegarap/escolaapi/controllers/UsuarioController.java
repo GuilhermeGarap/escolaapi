@@ -9,14 +9,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.guilhermegarap.escolaapi.domain.usuario.DadosAutenticacao;
 import com.guilhermegarap.escolaapi.domain.usuario.DadosCadastroUsuario;
+import com.guilhermegarap.escolaapi.domain.usuario.DadosDetalhesUsuario;
 import com.guilhermegarap.escolaapi.domain.usuario.Usuario;
 import com.guilhermegarap.escolaapi.domain.usuario.UsuarioRepository;
 import com.guilhermegarap.escolaapi.infra.security.DadosTokenJWT;
 import com.guilhermegarap.escolaapi.infra.security.TokenService;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,60 +42,65 @@ public class UsuarioController {
     @Autowired
     private TokenService tokenService;
 
-    @PostMapping("/cadastro")
-    public ResponseEntity<String> cadastrarUsuario(@RequestBody DadosCadastroUsuario dadosCadastro) {
-        logger.info("Recebendo solicitação de cadastro para o email: {}", dadosCadastro.email());
+    // Cadastrar um novo usuário
+    @Transactional
+    @PostMapping("/cadastrar")
+    public ResponseEntity<DadosDetalhesUsuario> cadastrarUsuario(@RequestBody @Valid DadosCadastroUsuario dados, UriComponentsBuilder uriBuilder) {
+        logger.info("Recebendo solicitação de cadastro para o email: {}", dados.email());
+
+        var usuario = new Usuario(dados);
+        logger.info("Usuario: {}", usuario);
+        // Verifica se o usuário já existe
+        if (usuarioRepository.findByEmail(dados.email()) != null) {
+            logger.error("Usuário com o email {} já existe!", dados.email());
+            return ResponseEntity.status(400).body(null);
+        }
+        // Criptografa a senha
+        String senhaCriptografada = passwordEncoder.encode(dados.senha());
+
+        // Cria um novo usuário
+        usuario.setSenha(senhaCriptografada);
+        usuario.setRole("ALUNO"); 
+
+        // Salva o usuário no banco de dados
+        usuarioRepository.save(usuario);
+
+        logger.info("Usuário cadastrado com sucesso: {}", usuario.getEmail());
+        var uri = uriBuilder.path("/usuario/cadastrarUsuario/{id}").buildAndExpand(usuario.getId()).toUri();
+        return ResponseEntity.created(uri).body(new DadosDetalhesUsuario(usuario));
+    }
+
+    // Cadastrar um usuário ADMIN
+    @Transactional
+    @PostMapping("/cadastrarAdmin")
+    public ResponseEntity<DadosDetalhesUsuario> cadastrarUsuarioADMIN(@RequestBody @Valid DadosCadastroUsuario dados, UriComponentsBuilder uriBuilder) {
+        logger.info("Recebendo solicitação de cadastro para o email: {}", dados.email());
+
+        var usuario = new Usuario(dados);
 
         // Verifica se o usuário já existe
-        if (usuarioRepository.findByEmail(dadosCadastro.email()) != null) {
-            logger.error("Usuário com o email {} já existe!", dadosCadastro.email());
-            return ResponseEntity.status(400).body("Usuário já existe!");
+        if (usuarioRepository.findByEmail(dados.email()) != null) {
+            logger.error("Usuário com o email {} já existe!", dados.email());
+            return ResponseEntity.status(400).body(null);
         }
 
         // Criptografa a senha
-        String senhaCriptografada = passwordEncoder.encode(dadosCadastro.senha());
+        String senhaCriptografada = passwordEncoder.encode(dados.senha());
 
         // Cria um novo usuário
-        Usuario novoUsuario = new Usuario();
-        novoUsuario.setNomeCompleto(dadosCadastro.nomeCompleto());
-        novoUsuario.setEmail(dadosCadastro.email());
-        novoUsuario.setSenha(senhaCriptografada);
-        novoUsuario.setRole(dadosCadastro.role() != null ? dadosCadastro.role() : "ROLE_ALUNO"); 
+        usuario.setSenha(senhaCriptografada);
+        usuario.setRole(dados.role() != null ? dados.role() : "ADMIN"); 
 
         // Salva o usuário no banco de dados
-        usuarioRepository.save(novoUsuario);
+        usuarioRepository.save(usuario);
 
-        logger.info("Usuário cadastrado com sucesso: {}", novoUsuario.getEmail());
-        return ResponseEntity.ok("Cadastro realizado com sucesso!");
+        logger.info("Usuário cadastrado com sucesso: {}", usuario.getEmail());
+        var uri = uriBuilder.path("/usuario/cadastrarUsuario/{id}").buildAndExpand(usuario.getId()).toUri();
+        return ResponseEntity.created(uri).body(new DadosDetalhesUsuario(usuario));
     }
 
-    @PostMapping("/cadastroAdmin")
-    public ResponseEntity<String> cadastrarUsuarioADMIN(@RequestBody DadosCadastroUsuario dadosCadastro) {
-        logger.info("Recebendo solicitação de cadastro para o email: {}", dadosCadastro.email());
-
-        // Verifica se o usuário já existe
-        if (usuarioRepository.findByEmail(dadosCadastro.email()) != null) {
-            logger.error("Usuário com o email {} já existe!", dadosCadastro.email());
-            return ResponseEntity.status(400).body("Usuário já existe!");
-        }
-
-        // Criptografa a senha
-        String senhaCriptografada = passwordEncoder.encode(dadosCadastro.senha());
-
-        // Cria um novo usuário
-        Usuario novoUsuario = new Usuario();
-        novoUsuario.setNomeCompleto(dadosCadastro.nomeCompleto());
-        novoUsuario.setEmail(dadosCadastro.email());
-        novoUsuario.setSenha(senhaCriptografada);
-        novoUsuario.setRole(dadosCadastro.role() != null ? dadosCadastro.role() : "ROLE_ADMIN"); 
-
-        // Salva o usuário no banco de dados
-        usuarioRepository.save(novoUsuario);
-
-        logger.info("Usuário cadastrado com sucesso: {}", novoUsuario.getEmail());
-        return ResponseEntity.ok("Cadastro realizado com sucesso!");
-    }
-
+    // Efetuar login
+    @Transactional
     @PostMapping("/login")
     public ResponseEntity<?> efetuarLogin(@RequestBody @Valid DadosAutenticacao dados) {
         logger.info("Recebendo solicitação de login para o email: {}", dados.email());

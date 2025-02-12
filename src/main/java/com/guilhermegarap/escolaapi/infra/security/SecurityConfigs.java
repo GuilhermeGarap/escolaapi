@@ -21,29 +21,32 @@ public class SecurityConfigs {
     private SecurityFilter securityFilter;
 
 
-@Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http.csrf(csrf -> csrf.disable())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authorize -> authorize
-                // Rotas públicas (acesso liberado sem autenticação)
-                .requestMatchers(
-                    "/usuario/cadastro", 
-                    "/usuario/login"
-                ).permitAll()
-                
-                // Rotas para ADMINISTRADORES
-                .requestMatchers("/carterinha/listar","/usuario/cadastroAdmin").hasRole("ADMIN")
-                
-                // Rotas para ALUNOS
-                .requestMatchers("/carterinha/cadastrar").hasRole("ALUNO")
-                
-                // Demais rotas exigem autenticação
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
-            .build();
-}
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http.csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                    // Rotas públicas (acesso liberado sem autenticação)
+                    .requestMatchers(
+                        "/usuario/cadastrar", 
+                        "/usuario/login"
+                    ).permitAll()
+                    
+                    // Rotas para ADMINISTRADORES
+                    .requestMatchers("/carterinha/listar", "/usuario/cadastrarAdmin").hasRole("ADMIN")
+                    
+                    // Rotas para ALUNOS
+                    .requestMatchers("/carterinha/cadastrar").hasRole("ALUNO")
+                    
+                    // Rota para buscar carteirinha (acesso para qualquer usuário autenticado)
+                    .requestMatchers("/carterinha/buscar/usuario/{id}").authenticated()
+                    
+                    // Demais rotas exigem autenticação
+                    .anyRequest().authenticated()
+                )
+                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
